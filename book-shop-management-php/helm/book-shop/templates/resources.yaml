@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bookshop-db-secret
+type: Opaque
+stringData:
+  username: {{ .Values.mysql.username | quote }}
+  password: {{ .Values.mysql.password | quote }}
+  rootPassword: {{ .Values.mysql.rootPassword | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bookshop-mysql-pvc
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: {{ .Values.mysql.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookshop-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: bookshop-mysql}
+  template:
+    metadata:
+      labels: {app: bookshop-mysql}
+    spec:
+      containers:
+      - name: mysql
+        image: {{ .Values.mysql.image }}
+        ports: [{containerPort: 3306}]
+        env:
+        - {name: MYSQL_DATABASE, value: {{ .Values.mysql.database | quote }}}
+        - {name: MYSQL_USER, valueFrom: {secretKeyRef: {name: bookshop-db-secret, key: username}}}
+        - {name: MYSQL_PASSWORD, valueFrom: {secretKeyRef: {name: bookshop-db-secret, key: password}}}
+        - {name: MYSQL_ROOT_PASSWORD, valueFrom: {secretKeyRef: {name: bookshop-db-secret, key: rootPassword}}}
+        volumeMounts: [{name: data, mountPath: /var/lib/mysql}]
+      volumes:
+      - name: data
+        persistentVolumeClaim: {claimName: bookshop-mysql-pvc}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookshop-mysql
+spec:
+  selector: {app: bookshop-mysql}
+  ports: [{port: 3306, targetPort: 3306}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookshop-php
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {app: bookshop-php}
+  template:
+    metadata:
+      labels: {app: bookshop-php}
+    spec:
+      containers:
+      - name: php-web
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports: [{containerPort: 80}]
+        env:
+        - {name: DB_HOST, value: bookshop-mysql}
+        - {name: DB_NAME, value: {{ .Values.mysql.database | quote }}}
+        - {name: DB_USER, valueFrom: {secretKeyRef: {name: bookshop-db-secret, key: username}}}
+        - {name: DB_PASSWORD, valueFrom: {secretKeyRef: {name: bookshop-db-secret, key: password}}}
+        readinessProbe:
+          httpGet: {path: /health.php, port: 80}
+          initialDelaySeconds: 15
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookshop-php
+spec:
+  type: NodePort
+  selector: {app: bookshop-php}
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: {{ .Values.service.nodePort }}

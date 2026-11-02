@@ -1,0 +1,11 @@
+pipeline {
+ agent any
+ stages {
+  stage('Checkout'){steps{checkout scm}}
+  stage('PHP Syntax Check'){steps{sh "find app -name '*.php' -print0 | xargs -0 -n1 php -l"}}
+  stage('Build Image'){steps{sh 'docker build -t ganeshfolane75/bookshop-php:${BUILD_NUMBER} -t ganeshfolane75/bookshop-php:latest .'}}
+  stage('Push Image'){steps{withCredentials([usernamePassword(credentialsId:'dockerhub-creds',usernameVariable:'DU',passwordVariable:'DP')]){sh 'echo "$DP" | docker login -u "$DU" --password-stdin';sh 'docker push ganeshfolane75/bookshop-php:${BUILD_NUMBER}';sh 'docker push ganeshfolane75/bookshop-php:latest'}}}
+  stage('Helm Deploy'){steps{sh 'helm upgrade --install bookshop ./helm/book-shop --create-namespace --set image.tag=${BUILD_NUMBER}'}}
+ }
+ post {always {sh 'docker logout || true'}}
+}

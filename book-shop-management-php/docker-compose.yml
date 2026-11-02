@@ -1,0 +1,32 @@
+services:
+ mysql:
+  image: mysql:8.4
+  restart: unless-stopped
+  environment:
+   MYSQL_DATABASE: bookshop
+   MYSQL_USER: bookuser
+   MYSQL_PASSWORD: bookpass
+   MYSQL_ROOT_PASSWORD: rootpass
+  volumes:
+   - mysql_data:/var/lib/mysql
+   - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+  healthcheck:
+   test: ["CMD-SHELL","mysqladmin ping -h localhost -ubookuser -pbookpass"]
+   interval: 10s
+   timeout: 5s
+   retries: 12
+ web:
+  build: .
+  image: ganeshfolane75/bookshop-php:v1
+  restart: unless-stopped
+  environment:
+   DB_HOST: mysql
+   DB_NAME: bookshop
+   DB_USER: bookuser
+   DB_PASSWORD: bookpass
+  depends_on:
+   mysql:
+    condition: service_healthy
+  ports: ["8085:80"]
+volumes:
+ mysql_data:

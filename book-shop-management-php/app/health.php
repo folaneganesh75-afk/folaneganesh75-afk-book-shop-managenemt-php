@@ -1,0 +1,1 @@
+<?php header('Content-Type: application/json');try{require __DIR__.'/db.php';$pdo->query('SELECT 1');echo json_encode(['status'=>'UP']);}catch(Throwable $e){http_response_code(503);echo json_encode(['status'=>'DOWN']);}

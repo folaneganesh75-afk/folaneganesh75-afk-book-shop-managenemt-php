@@ -1,0 +1,15 @@
+image:
+  repository: ganeshfolane75/bookshop-php
+  tag: v1
+  pullPolicy: IfNotPresent
+replicaCount: 2
+service:
+  port: 80
+  nodePort: 30085
+mysql:
+  image: mysql:8.4
+  database: bookshop
+  username: bookuser
+  password: bookpass
+  rootPassword: rootpass
+  storage: 2Gi
