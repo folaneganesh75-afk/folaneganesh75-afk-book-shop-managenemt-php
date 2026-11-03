@@ -10,28 +10,26 @@ phases:
 
   pre_build:
     commands:
-      - echo "Starting PHP Project Build"
-      - |
-        if [ -f composer.json ]; then
-          echo "Installing Composer dependencies"
-          composer install --no-interaction --prefer-dist
-        else
-          echo "composer.json not found. Skipping Composer installation"
-        fi
+      - echo "Preparing PHP Book Shop Management Project"
+      - echo "Checking project directory"
 
   build:
     commands:
-      - echo "Building PHP Application"
-      - echo "Checking PHP syntax"
+      - echo "Starting PHP Build"
       - |
-        find . -type f -name "*.php" -not -path "./vendor/*" -print0 | xargs -0 -r -n1 php -l
-      - echo "PHP Build Completed Successfully"
+        APP_DIR="folaneganesh75-afk-book-shop-managenemt-php/book-shop-management-php"
+        cd "$APP_DIR"
+
+        echo "Checking PHP files"
+        find . -type f -name "*.php" -not -path "./vendor/*" -not -path "./.git/*" -print0 | xargs -0 -r -n1 php -l
+
+        echo "PHP Build Completed Successfully"
 
   post_build:
     commands:
-      - echo "PHP Project Build Finished"
+      - echo "PHP project build finished successfully"
 
 artifacts:
-  base-directory: .
+  base-directory: folaneganesh75-afk-book-shop-managenemt-php/book-shop-management-php
   files:
     - '**/*'
