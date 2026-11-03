@@ -1,0 +1,35 @@
+cat > buildspec.yml <<'EOF'
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      php: 8.2
+    commands:
+      - echo "Installing PHP 8.2"
+      - php --version
+
+  pre_build:
+    commands:
+      - echo "Preparing PHP Book Shop Project"
+
+  build:
+    commands:
+      - |
+        set -e
+        cd folaneganesh75-afk-book-shop-managenemt-php/book-shop-management-php
+
+        echo "Checking PHP files"
+        find . -type f -name "*.php" -not -path "./vendor/*" -print0 | xargs -0 -r -n1 php -l
+
+        echo "PHP Build Completed Successfully"
+
+  post_build:
+    commands:
+      - echo "PHP Build Finished"
+
+artifacts:
+  base-directory: folaneganesh75-afk-book-shop-managenemt-php/book-shop-management-php
+  files:
+    - '**/*'
+EOF
