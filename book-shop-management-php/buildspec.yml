@@ -1,0 +1,37 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      php: 8.2
+    commands:
+      - echo "Installing PHP 8.2"
+      - php --version
+
+  pre_build:
+    commands:
+      - echo "Starting PHP Project Build"
+      - |
+        if [ -f composer.json ]; then
+          echo "Installing Composer dependencies"
+          composer install --no-interaction --prefer-dist
+        else
+          echo "composer.json not found. Skipping Composer installation"
+        fi
+
+  build:
+    commands:
+      - echo "Building PHP Application"
+      - echo "Checking PHP syntax"
+      - |
+        find . -type f -name "*.php" -not -path "./vendor/*" -print0 | xargs -0 -r -n1 php -l
+      - echo "PHP Build Completed Successfully"
+
+  post_build:
+    commands:
+      - echo "PHP Project Build Finished"
+
+artifacts:
+  base-directory: .
+  files:
+    - '**/*'
